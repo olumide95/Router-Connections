@@ -1,5 +1,6 @@
 require 'httparty'
 require 'set'
+require 'json'
 
 class RouterConnections
   API_URL = 'https://my-json-server.typicode.com/marcuzh/router_location_test_api/db'
