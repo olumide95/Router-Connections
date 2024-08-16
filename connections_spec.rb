@@ -3,9 +3,34 @@ require 'httparty'
 require_relative './connections'
 
 describe RouterConnections do
+  let(:object) { RouterConnections }
+
   describe '.find_location_connections' do
     before do
-      allow(RouterConnections).to receive(:fetch_data).and_return(api_response)
+      allow(object).to receive(:fetch_data).and_return(DTO::RouterLocation.new(api_response))
+      object.instance_variable_set(:@data, nil)
+      object.instance_variable_set(:@routers, nil)
+      object.instance_variable_set(:@locations, nil)
+      object.instance_variable_set(:@location_map, nil)
+      object.instance_variable_set(:@router_map, nil)
+    end
+
+    context 'fetch_data raises an error' do
+      before do
+        allow(object).to receive(:fetch_data).and_raise(StandardError, "Failed to fetch data from API")
+        allow(RouterConnections.logger).to receive(:error)
+      end
+
+      let(:api_response) do
+        {}
+      end
+
+      it 'returns an empty result' do
+        expect(object.logger).to receive(:error).with("Failed to fetch data from API")
+
+        connections = object.find_location_connections
+        expect(connections).to be_empty
+      end
     end
 
     context 'single bi-directional connections' do
@@ -23,7 +48,7 @@ describe RouterConnections do
       end
 
       it 'returns the correct connection between locations' do
-        connections = RouterConnections.find_location_connections
+        connections = object.find_location_connections
         expect(connections).to contain_exactly('Chester <-> London')
       end
     end
@@ -45,7 +70,7 @@ describe RouterConnections do
       end
 
       it 'returns all unique connections' do
-        connections = RouterConnections.find_location_connections
+        connections = object.find_location_connections
         expect(connections).to contain_exactly(
           'Chester <-> London',
           'Birmingham <-> Chester'
@@ -66,7 +91,7 @@ describe RouterConnections do
       end
 
       it 'does not include self-connections' do
-        connections = RouterConnections.find_location_connections
+        connections = object.find_location_connections
         expect(connections).to be_empty
       end
     end
@@ -88,7 +113,7 @@ describe RouterConnections do
       end
 
       it 'correctly handles chain connections' do
-        connections = RouterConnections.find_location_connections
+        connections = object.find_location_connections
         expect(connections).to contain_exactly(
           'Chester <-> London',
           'Birmingham <-> London'
@@ -111,7 +136,7 @@ describe RouterConnections do
       end
 
       it 'returns an empty list' do
-        connections = RouterConnections.find_location_connections
+        connections = object.find_location_connections
         expect(connections).to be_empty
       end
     end
@@ -133,7 +158,7 @@ describe RouterConnections do
       end
 
       it 'returns all possible connections' do
-        connections = RouterConnections.find_location_connections
+        connections = object.find_location_connections
         expect(connections).to contain_exactly(
           'Chester <-> London',
           'Birmingham <-> Chester',
@@ -151,7 +176,7 @@ describe RouterConnections do
       end
 
       it 'returns an empty result' do
-        connections = RouterConnections.find_location_connections
+        connections = object.find_location_connections
         expect(connections).to be_empty
       end
     end
